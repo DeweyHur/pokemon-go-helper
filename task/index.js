@@ -1,4 +1,4 @@
-const rename = require('./rename');
+const rename = require('./rename2');
 const simulateEvolution = require('./simulate-evolution');
 const downloadPokemons = require('./download-pokemons');
 
