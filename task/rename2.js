@@ -78,15 +78,17 @@ module.exports = (pokeio) => {
           const move_2 = settings.move[each.move_2];
           if (pokemon && pokemon.candy_to_evolve > 0) {
             const candy = candies[pokemon.family_id];
+            const level = pokedex.cp_multiplier.findIndex(mult => Math.floor(mult * 1000) === Math.floor(each.cpMultiplier * 1000));
             let newNickname = [
               formatIv(each.individualAttack),
               formatIv(each.individualDefense),
               formatIv(each.individualStamina),
               each.ivGrade,
-              ' ',
-              candy,
-              '/',
-              pokemon.candy_to_evolve
+              level,
+              '.',
+              pokemon.candy_to_evolve,
+              '*',
+              Math.floor(candy / pokemon.candy_to_evolve)
             ].join('').trim();
             return Object.assign({}, each, { newNickname });
 
