@@ -31,7 +31,7 @@ let next;
 if (config.username && config.password) {
   next = Promise.resolve(config);
 } else {
-  next = util.ask('[Pokémon Go Helper] gmail: ')
+  next = util.ask('[Pokémon Go Helper] Google ID: ')
     .then((username) => {
       config.username = username || config.username;
       return util.askHidden('[Pokémon Go Helper] password: ');

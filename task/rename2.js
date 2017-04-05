@@ -1,18 +1,23 @@
 const pokedex = require('../pokedex');
 
 const dictionary = Object.assign(...pokedex.pokemons.map(each => ({ [each.id]: each })));
+const OPPOSITE_DEF = 150;
 const COOLDOWN_FORMAT = ['A','a','B','b','C','c','D','d','F','f'];
-const formatQuickMove = (pokemon, attack, move) => {
-  const stab = (move.pokemon_type === pokemon.type || move.pokemon_type === pokemon.type_2) ? 1.25 : 1;
-  // COOLDOWN range - [900, 2300]
-  const cooldownIndex = Math.max(0, Math.min(Math.floor((move.duration_ms - 900) / 100), COOLDOWN_FORMAT.length - 1));
-  return `${Math.round(move.power * stab * attack / 200)}${COOLDOWN_FORMAT[cooldownIndex]}`;
+const formatQuickMove = (pokemon, attack, quickMove) => {
+  const stab = (quickMove.pokemon_type === pokemon.type || quickMove.pokemon_type === pokemon.type_2) ? 1.25 : 1;
+  const power = quickMove.power * stab * attack / OPPOSITE_DEF;
+  const dps = power / (quickMove.duration_ms / 1000);
+  return `${Math.round(dps)}`;
 };
 const COUNT_FORMAT = { 1: 'S', 2: 'D', 3: 'T', 4: 'Q', 5: 'P' };
-const formatCinematicMove = (pokemon, attack, move) => {
-  const stab = (move.pokemon_type === pokemon.type || move.pokemon_type === pokemon.type_2) ? 1.25 : 1;
-  const countIndex = Math.round(100 / Math.abs(move.energy_delta));
-  return `${Math.round(move.power * stab * attack / 200)}${COUNT_FORMAT[countIndex] || '?'}`;
+const formatCinematicMove = (pokemon, attack, quickMove, cinematicMove) => {
+  const stab = (cinematicMove.pokemon_type === pokemon.type || cinematicMove.pokemon_type === pokemon.type_2) ? 1.25 : 1;
+  const countIndex = Math.round(100 / Math.abs(cinematicMove.energy_delta));
+  const power = cinematicMove.power * stab * attack / OPPOSITE_DEF;
+  const eps = quickMove.energy_delta / (quickMove.duration_ms / 1000);
+  const chargingDuration = Math.abs(cinematicMove.energy_delta) / eps;
+  const dps = power / (chargingDuration + cinematicMove.duration_ms / 1000);
+  return `${Math.round(dps)}${COUNT_FORMAT[countIndex] || '?'}`;
 };
 const formatIv = (value) => {
   switch (value) {
@@ -76,9 +81,9 @@ module.exports = (pokeio) => {
           const pokemon = settings.pokemon[each.pokemonId];
           const move_1 = settings.move[each.move_1];
           const move_2 = settings.move[each.move_2];
+          const level = pokedex.cp_multiplier.findIndex(mult => Math.floor(mult * 1000) === Math.floor(each.cpMultiplier * 1000));
           if (pokemon && pokemon.candy_to_evolve > 0) {
             const candy = candies[pokemon.family_id];
-            const level = pokedex.cp_multiplier.findIndex(mult => Math.floor(mult * 1000) === Math.floor(each.cpMultiplier * 1000));
             let newNickname = [
               formatIv(each.individualAttack),
               formatIv(each.individualDefense),
@@ -95,15 +100,13 @@ module.exports = (pokeio) => {
           } else if (pokemon && move_1 && move_2) {
             const attack = pokemon.stats.base_attack + each.individualAttack;
             let newNickname = [
+              level,
               each.ivGrade, 
-              attack, 
               pokedex.types[move_1.pokemon_type], 
               formatQuickMove(pokemon, attack, move_1),
               pokedex.types[move_2.pokemon_type], 
-              formatCinematicMove(pokemon, attack, move_2)
+              formatCinematicMove(pokemon, attack, move_1, move_2)
             ].join('').trim();
-            if (newNickname.length > 12)
-              newNickname = newNickname.substr(0, 3) + newNickname.substr(4);
             return Object.assign({}, each, { newNickname });
 
           } else {
