@@ -22,7 +22,7 @@
     "moment": "^2.17.1",
     "object.entries": "^1.0.4",
     "object.values": "^1.0.4",
-    "pogobuf": "*",
+    "pogobuf": "pogosandbox/pogobuf",
     "pokemon-go-node-api": "*",
     "readline": "^1.3.0",
     "xlsx": "^0.8.2"
